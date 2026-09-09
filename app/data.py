@@ -1,22 +1,23 @@
 """
-Generates realistic-looking dummy room booking data across a fixed date
-range. Uses a fixed random seed so the data is identical every time the
-app restarts -- handy for demoing and for writing automated tests against
-known values.
+Generates room booking data across a fixed date range, using hardcoded
+reference data (subjects, rooms, lecturers, student groups) rather than
+randomly generated names. A fixed random seed is still used to decide
+*which* room/subject/lecturer/group combination fills each slot, so the
+dataset is completely deterministic: it is built once when this module
+is imported (see BOOKINGS at the bottom) and never regenerated again, so
+it stays identical for the lifetime of the running server and is
+identical again the next time the server starts.
 """
 
 import random
 from datetime import date, timedelta
-from faker import Faker
 from app.models import RoomBooking
 
-fake = Faker("en_GB")
-Faker.seed(42)
 random.seed(42)
 
 # --- Fixed reference data, as specified in the assessment brief ---
 
-SUBJECTS = [
+SUBJECTS = [    
     "Software Development",
     "Cyber Security",
     "Group Project",
@@ -24,7 +25,7 @@ SUBJECTS = [
     "Data and Algorithms",
     "Computer Vision",
     "Artificial Intelligence",
-    "Data Science"
+    "Data Science",
 ]
 
 ROOMS = [
@@ -32,8 +33,26 @@ ROOMS = [
     "CM018", "CM019", "CM025", "CM026", "CM101", "CM210", "CM234",
 ]
 
+LECTURERS = [
+    "Dr Mark Lochrie",
+    "Dr Oliver Kerr",
+    "Dr Matt Horton",
+    "Ms Julie Allen",
+    "Mr Jonathan Edwards",
+    "Mr Chris Finnigan",
+    "Dr John King",
+    "Dr Martin Bateman",
+    "Dr Wilson Costa",
+]
+
+STUDENT_GROUPS = [
+    f"Year {year} - Group {group}"
+    for year in (1, 2, 3)
+    for group in ("A", "B", "C")
+]
+
 BOOKING_START_DATE = date(2026, 10, 1)
-BOOKING_END_DATE = date(2027, 4, 15)
+BOOKING_END_DATE = date(2027, 8, 5)
 
 PERIODS = [
     (1, "09:00", "10:00"),
@@ -43,14 +62,6 @@ PERIODS = [
     (5, "14:00", "15:00"),
     (6, "15:00", "16:00"),
 ]
-
-STUDENT_GROUPS = [
-    f"Year {year} - Group {group}"
-    for year in (1, 2, 3)
-    for group in ("A", "B", "C")
-]
-
-LECTURERS = ["Dr Mark Lochrie", "Dr Oliver Kerr", "Dr Matt Horton", "Ms Julie Allen", "Mr Jonathan Edwards", "Mr Chris Finigan", "Dr John King", "Dr Martin Bateman", "Dr Wilson Costa"]
 
 # Probability that any given room/period slot on a weekday is actually booked.
 # Keeps the data realistic (not every room is used every single period).
@@ -100,5 +111,7 @@ def generate_bookings() -> list[RoomBooking]:
     return bookings
 
 
-# Generated once at import time, acting as our "database" for the demo.
+# Generated exactly once, at import time, and cached here. Every request
+# reads from this same list -- nothing regenerates or reshuffles it while
+# the server is running, so results are stable across requests.
 BOOKINGS: list[RoomBooking] = generate_bookings()
