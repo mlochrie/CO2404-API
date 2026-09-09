@@ -17,7 +17,7 @@ timetable_api/
 │   ├── __init__.py
 │   ├── main.py         # FastAPI app + all routes
 │   ├── models.py       # Pydantic schemas (RoomBooking, RoomAvailability)
-│   ├── data.py          # Dummy data generation (uses Faker, fixed seed)
+│   ├── data.py          # Hardcoded reference data + booking generation (fixed seed)
 │   ├── deps.py           # Shared dependency: requires + logs student_id
 │   └── logging_db.py     # MongoDB connection and logging functions
 ├── .env.example          # Template for your Atlas connection details
@@ -130,15 +130,26 @@ screenshot for your report).
 ## The booking data
 
 - **Subjects:** Software Development, Cyber Security, Group Project, User
-  Experience, Data and Algorithms, Computer Vision, Artificial Intelligence
+  Experience, Data and Algorithms, Computer Vision, Artificial Intelligence,
+  Data Science
 - **Rooms:** CM006, CM009, CM010, CM014, CM015, CM016, CM017, CM018, CM019,
   CM025, CM026, CM101, CM210, CM234
-- **Date range:** 01/10/2026 to 15/04/2027, weekdays only
+- **Lecturers:** a fixed list of 9 named lecturers (see `app/data.py`)
+- **Student groups:** Year 1/2/3, each with Group A/B/C
+- **Date range:** 01/10/2026 to 05/08/2027, weekdays only
 - **Periods per day:** 6 (09:00–10:00 through 15:00–16:00)
 
-Data is generated using [`Faker`](https://faker.readthedocs.io/) with a
-**fixed random seed (42)**, so it's identical every time the app restarts.
-It's in-memory only — nothing is persisted beyond the audit log.
+All of the above are hardcoded lists in `app/data.py` — nothing is
+generated with `Faker` or any other name-generation library. A fixed
+random seed (42) is still used to decide *which* room/subject/lecturer/
+group combination fills each slot, so the dataset is fully reproducible.
+
+Bookings are generated **exactly once**, when the app starts (see the
+`BOOKINGS` list at the bottom of `app/data.py`), and every request reads
+from that same in-memory list. Nothing regenerates or reshuffles it while
+the server is running, so results are stable across requests — and
+because the random seed is fixed, they're identical again the next time
+the server restarts too.
 
 ## Endpoints
 
